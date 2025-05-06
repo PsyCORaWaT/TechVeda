@@ -17,5 +17,3 @@ __pycache__/
 *.sqlite3
 credentials.json
 metadata.json
-users.json
-TechVeda/users.json
