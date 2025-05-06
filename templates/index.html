@@ -14,6 +14,22 @@
     <a href="/login">I already have an account</a> <br>
     <a href="/register">Create an account</a>
 
+
+
+    <h1>📂 Uploaded Files</h1>
+    <ul>
+        {% for file in files %}
+            <li>
+                <strong>{{ file.filename }}</strong><br>
+                Type: {{ file.file_type }}<br>
+                Uploaded by: {{ file.uploaded_by }} at {{ file.upload_time }}<br>
+                <a href="https://drive.google.com/uc?id={{ file.drive_file_id }}&export=download" target="_blank">⬇️ Download</a>
+            </li>
+            <hr>
+        {% endfor %}
+    </ul>
+    <a href="{{ url_for('dashboard') }}">⬅️ Back to Dashboard</a>
+
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
