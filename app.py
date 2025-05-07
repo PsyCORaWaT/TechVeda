@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, request, url_for, jsonify, session
+from flask import Flask, render_template, redirect, request, url_for, jsonify, session, flash
 import os
 import json
 from google.oauth2 import service_account
@@ -6,14 +6,44 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from werkzeug.utils import secure_filename
 from datetime import datetime
+from functools import wraps
 
-app = Flask(__name__)   
-# Always resolve file paths *relative to where this script is saved*
+# App Setup
+app = Flask(__name__)
+
+# Secret Key for Session Management
+app.secret_key = os.urandom(24)  # Use a random secret key for production
+
+# Directories and Files
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 USER_FILES = os.path.join(BASE_DIR, "users.json")
-
-# ------------------Meta-Data Helper function-----------------
 METADATA_FILE = os.path.join(BASE_DIR, "metadata.json")
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'upload')
+
+# Allowed Extensions for File Upload
+ALLOWED_EXTENSIONS = {'pdf', 'ppt', 'docx', 'txt'}
+
+# Google Drive Setup
+SCOPE = ['https://www.googleapis.com/auth/drive.file']
+SERVICE_ACCOUNT_FILE = os.path.join(BASE_DIR, 'credentials.json')
+credentials = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPE)
+drive_service = build('drive', 'v3', credentials=credentials)
+
+# Create Upload Folder if it doesn't exist
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# Helper Functions
+def load_users():
+    if not os.path.exists(USER_FILES):
+        return []
+    with open(USER_FILES, "r") as file:
+        users = json.load(file)
+        print("Loaded User:", users)  # Delete later
+        return users
+
+def save_users(users):
+    with open(USER_FILES, "w") as file:
+        json.dump(users, file, indent=4)
 
 def load_metadata():
     if not os.path.exists(METADATA_FILE):
@@ -25,115 +55,144 @@ def save_metadata(metadata):
     with open(METADATA_FILE, "w") as file:
         json.dump(metadata, file, indent=4)
 
-# -----Setup for Google Drive Access (Load credentials and set up the Google Drive service)----
-SCOPE = ['https://www.googleapis.com/auth/drive.file']
-SERVICE_ACCOUNT_FILE = os.path.join(BASE_DIR, 'credentials.json')  # Fix path to credentials.json
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-credentials = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPE)
+# Session Protection Decorator
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "username" not in session:
+            flash("You need to log in first!", "warning")
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
-drive_service = build('drive', 'v3', credentials=credentials)
-
-app.secret_key = "super-secret-key (ye bahut jada sceret hai <001199228833$$&&%%^^>)"  # You can use any long random string
-
-# --------------------------------------Handling user data----------------------------- 
-# Load users from file   
-def load_users():
-    if not os.path.exists(USER_FILES):   
-        return[] 
-    with open(USER_FILES, "r") as file:  #"r" = read mode
-        return json.load(file)
-
-#save users to file 
-def save_users(users):
-    with open(USER_FILES,"w") as file:   # "w" = write mode
-        json.dump(users, file, indent=4)   # json.dump = Writes data to the file as JSON
-
-# -----MAIN ROUTE -------
+# Routes for Index
 @app.route('/')
 def index():
-    if "username" not in session:
-        return redirect(url_for("login"))
-    metadata= load_metadata()
+    metadata = load_metadata()
+    metadata.sort(key=lambda x: x.get('upload_time', ''), reverse=True)
     return render_template("index.html", files=metadata)
 
-#--------------------------------route for Register Page  and handling data in Register ----------------------------
-@app.route('/register', methods=["GET","POST"])
+# Routes for Registration
+@app.route('/register', methods=["GET", "POST"])
 def register():
-    if request.method == 'POST':
+    if request.method == "POST":
         data = request.form
         username = data.get("username")
         email = data.get("email")
         password = data.get("password")
-        
+
         if not username or not email or not password:
-            return "All fields are required!",400
-        
+            flash("All fields are required!", "danger")
+            return redirect(url_for('register'))
+
         users = load_users()
+        if any(user["username"] == username for user in users):
+            flash("Username already taken!", "danger")
+            return redirect(url_for('register'))
+        if any(user["email"] == email for user in users):
+            flash("Email already registered!", "danger")
+            return redirect(url_for('register'))
 
-        for user in users:
-            if user["username"] == username:
-                return "Kuch aur soch na yaar, yeh username already occupied hai!(Username already existed)"
-            if user["email"] == email:
-                return "E-mail already registered!"
-        
-        users.append({
-            "username": username,
-            "email": email,
-            "password": password
-        })
-
+        users.append({"username": username, "email": email, "password": password})
         save_users(users)
+        flash("Registration successful! Please log in.", "success")
         return redirect(url_for("login"))
-
+    
     return render_template('register.html')
 
-#----------------------------------route for Login Page--------------------------
+# Routes for Login and Logout
 @app.route('/login', methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         data = request.form
         username = data.get("username")
         password = data.get("password")
-        
-        users = load_users()
 
-        for user in users:
-            if user["username"] == username and user["password"] == password:
-                session["username"] = user["username"]
-                session["email"] = user["email"]
-                return redirect(url_for('dashboard'))
-        return "Ek minute...! Tu kon hai bey?  (Invalid Username or Password!)", 401
+        users = load_users()
+        user = next((user for user in users 
+                     if user["username"] == username and user["password"] == password), None)
+
+        if user:
+            session["username"] = user["username"]
+            session["email"] = user["email"]
+            flash("Login successful!", "success")
+            return redirect(url_for('dashboard'))
+        
+        flash("Invalid username or password!", "danger")
+        return redirect(url_for("login"))
 
     return render_template('login.html')
 
-# loguot session
 @app.route("/logout")
 def logout():
     session.clear()
+    flash("Logged out successfully!", "info")
     return redirect(url_for("login"))
 
-# --------------------------------------------Route For dashboard-----------------------
+# Route for Dashboard
 @app.route('/dashboard', methods=["POST", "GET"])
+@login_required  # Ensure user is logged-in
 def dashboard():
     if "username" in session:
         name = session["username"]
         email = session["email"]
-        return render_template("dashboard.html", name=name, email=email)
 
-#-------------------Route For Upload----------------------
+        metadata = load_metadata()
+
+        # Filter files uploaded by the logged-in user
+        user_files = [file for file in metadata if file.get("uploaded_by") == name]
+        
+        print("User Files:", user_files)  # Debugging
+
+    return render_template("dashboard.html", name=session["username"], email=email, files=user_files)
+    
+
+
+# Google Drive file deletion function (used later)
+def delete_from_drive(file_id):
+    try:
+        drive_service.files().delete(fileId=file_id).execute()
+    except Exception as e:
+        print(f"Error deleting file from Google Drive: {e}")
+
+# Route for deleting files
+@app.route('/delete_files/<file_id>', methods=["POST","GET"])
+@login_required
+def delete_files(file_id):
+    metadata = load_metadata()  # Load metadata from json file
+
+    file_to_delete = next((file for file in metadata 
+                           if file['drive_file_id'] == file_id), None)
+    if file_to_delete:
+        delete_from_drive(file_id)  # Delete file from Google Drive
+
+        metadata = [file for file in metadata 
+                    if file['drive_file_id'] != file_id]  # Remove file/data from metadata.json
+        
+        save_metadata(metadata)
+
+        flash("Le bhai kr diya Delete", "Success")
+        return redirect(url_for("dashboard"))
+    else:
+        flash("Bhai jo hai hi nhi usko kahan se Delete Karun????", "File Not Found")
+        return redirect(url_for("dashboard"))
+
+# Route for file upload
 @app.route('/upload', methods=['GET', 'POST'])
+@login_required
 def upload_file():
     if request.method == 'POST':
         file = request.files['file']
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            filepath = os.path.join(UPLOAD_FOLDER, filename)
             file.save(filepath)
 
-            # Upload to Google Drive
             file_id = upload_to_drive(filepath, filename)
 
-            # Save file metadata
             metadata = load_metadata()
             metadata.append({
                 "filename": filename,
@@ -145,69 +204,37 @@ def upload_file():
             })
             save_metadata(metadata)
 
-            # Delete local copy
             os.remove(filepath)
+            flash("Upload successful!", "success")
+            return redirect(url_for('dashboard'))
 
-            return f"✅ Upload successful! File ID on Drive: {file_id}"
-        else:
-            return "❌ Invalid file type!"
+        flash("Invalid file type!", "danger")
+
     return render_template('upload.html')
 
-#Uplaod-to-Drive Function
 def upload_to_drive(filepath, filename):
-    file_metadata = {
-        'name': filename,
-        'parents': ['154kFHYM0HwC2X_R7jV6DV74q_4dIVZzx']  # Folder ID (not URL)
-    }
+    file_metadata = {'name': filename, 'parents': ['154kFHYM0HwC2X_R7jV6DV74q_4dIVZzx']}
     media = MediaFileUpload(filepath)
     uploaded_file = drive_service.files().create(
         body=file_metadata,
         media_body=media,
         fields='id'
     ).execute()
-
-    # Grant 'anyone' permission to view/download
+    
     drive_service.permissions().create(
         fileId=uploaded_file['id'],
-        body={
-            'type': 'anyone',
-            'role': 'reader'
-        },
+        body={'type': 'anyone', 'role': 'reader'},
         fields='id'
     ).execute()
+
     return uploaded_file.get('id')
 
-#Set upload folder and allowed file extensions
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'upload')  # "os.path.abspath(__file__)" gives full path of the current script (app.py).
-# os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-ALLOWED_EXTENSION = {'pdf', 'ppt', 'docx', 'txt'}
-
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSION
-
-
-
-
-
-#-----------Display Function---------------
 @app.route('/files')
+@login_required
 def list_files():
-    if "username" not in session:
-        return redirect(url_for("login"))
-
     metadata = load_metadata()
     return render_template("files.html", files=metadata)
 
-
-
-
-
-
-
-
-
-
+# Run App
 if __name__ == "__main__":
     app.run(debug=True)

@@ -5,6 +5,77 @@
     <title>Dashboard - TechVeda</title>
     <style>
         body {
+          font-family: 'Segoe UI', sans-serif;
+          background-color: #f5f5f5;
+          margin: 0;
+          padding: 0;
+        }
+      
+        .navbar {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          background-color: #283593;
+          color: white;
+          padding: 1rem 2rem;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+      
+        .navbar .nav-left h2 {
+          margin: 0;
+          font-size: 1.5rem;
+        }
+      
+        .navbar .btn {
+          background-color: #5c6bc0;
+          color: white;
+          padding: 0.5rem 1rem;
+          text-decoration: none;
+          margin-left: 1rem;
+          border-radius: 5px;
+          transition: background-color 0.3s ease;
+        }
+      
+        .navbar .btn:hover {
+          background-color: #7986cb;
+        }
+      
+        .logout {
+          background-color: #e53935;
+        }
+      
+        .logout:hover {
+          background-color: #ef5350;
+        }
+      
+        .dashboard-container {
+          padding: 2rem;
+        }
+      
+        .file-entry {
+          background: white;
+          margin: 1rem 0;
+          padding: 1rem;
+          border-radius: 8px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+      
+        .file-entry a {
+          text-decoration: none;
+          color: #3f51b5;
+          font-weight: bold;
+        }
+      
+        .file-entry a:hover {
+          text-decoration: underline;
+        }
+      </style>
+      
+   <!--<style>
+     body {
             font-family: Arial, sans-serif;
             padding: 40px;
             background: #f4f4f4;
@@ -29,22 +100,65 @@
             text-decoration: none;
             border-radius: 5px;
         }
-    </style>
+    </style>  -->
 </head>
 <body>
-    <div class="dashboard">
+
+    <nav class="navbar">
+        <div class="nav-left">
+          <h2>Welcome to TechVeda 📚</h2>
+        </div>
+        <div class="nav-right">
+          <a href="{{ url_for('index') }}" class="btn">Home</a>
+          <a href="{{ url_for('login') }}" class="btn logout">Logout</a>
+        </div>
+      </nav>
+      
+
+    <div class="dashboard-container">
         <h1>Welcome, {{ name }}!</h1>
         <p>Email: {{ email }}</p>
-        <a class="logout" href="{{ url_for('logout') }}">Logout</a>
-    </div>
+    
 
 
-    <div>
-        <form action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data">
-            <input type="file" name="file">
-            <button type="submit">Upload</button>
-        </form>
-        
-    </div>
-</body>
+        {% if files %}
+        <ul>
+        {% for file in files %}
+            <li>
+                <strong>{{ file.filename }}</strong> |
+                Uploaded by: {{ file.uploaded_by }} |
+                Type: {{ file.file_type }} |
+                Time: {{ file.upload_time }} |
+                <a href="https://drive.google.com/file/d/{{ file.drive_file_id }}/view" target="_blank">View</a> |
+                <a href="https://drive.google.com/uc?id={{ file.drive_file_id }}&export=download" target="_blank">Download</a>  {{ file['file_name'] }} - <a href="{{ url_for('delete_files', file_id=file['drive_file_id']) }}">Delete</a>
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No files found</p>
+    {% endif %}
+    </div> 
+
+
+
+</div>
+<!-- Inline Upload Form -->
+<form action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data" style="margin-bottom: 20px; padding: 15px; background: #ffffff; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+    <label for="file" style="font-weight: bold;">📁 Choose a file to upload:</label><br><br>
+    <input type="file" name="file" id="file" required style="margin-bottom: 10px;"><br>
+    
+    <!-- <label for="filetype">File Type:</label>
+    <select name="filetype" id="filetype" required>
+        <option value="pdf">PDF</option>
+        <option value="doc">Word</option>
+        <option value="ppt">PowerPoint</option>
+        <option value="img">Image</option>
+        <option value="txt">Text</option>
+        <option value="other">Other</option>
+    </select><br><br> -->
+    
+    <button type="submit" style="background-color: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">⬆️ Upload File</button>
+</form>
+
+
 </html>

@@ -1,21 +1,18 @@
-users.json
 # Ignore the virtual environment
 tech-env/
 venv/
-
 # Ignore Python cache files
 __pycache__/
 *.pyc
-
 # Ignore env files if using .env
 .env
-
 venv/
 __pycache__/
 *.pyc
 *.pyo
 .env
 *.sqlite3
-credentials.json
+credentials.json  
+users.json
 metadata.json
-
+tempCodeRunnerFile.py
