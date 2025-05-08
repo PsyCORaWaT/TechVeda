@@ -5,11 +5,17 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.exceptions import RequestEntityTooLarge
 from datetime import datetime
 from functools import wraps
 
+
 # App Setup
 app = Flask(__name__)
+
+# setting max size for a file
+app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024  # 20 MB limit
 
 # Secret Key for Session Management
 app.secret_key = os.urandom(24)  # Use a random secret key for production
@@ -72,8 +78,35 @@ def login_required(f):
 @app.route('/')
 def index():
     metadata = load_metadata()
-    metadata.sort(key=lambda x: x.get('upload_time', ''), reverse=True)
-    return render_template("index.html", files=metadata)
+
+    query = request.args.get('q','').lower()
+    file_type = request.args.get('type','')
+    sort_by = request.args.get('sort_by','upload_time') #Default Sorting (Sort By Time)
+
+    #applying Filter Functionality
+
+    # Filter by search
+    if query:
+        metadata = [file for file in metadata
+                     if query in file['filename'].lower()]
+    
+    # Filter by file type
+    if file_type:
+        metadata = [file for file in metadata if file["file_type"].lower() == file_type.lower()]
+
+    # sorting
+    if sort_by == 'name':
+        metadata.sort(key=lambda x: x["flename"].lower())
+    elif sort_by == 'uploader':
+        metadata.sort(key=lambda x: x["uploaded_by"].lower())
+    elif sort_by == 'upload_time':
+        metadata.sort(key=lambda x: datetime.strptime(x["upload_time"], "%Y-%m-%d %H:%M:%S"), reverse=True)
+    
+    return render_template('index.html', files = metadata)
+
+
+    # metadata.sort(key=lambda x: x.get('upload_time', ''), reverse=True)
+    # return render_template("index.html", files=metadata)
 
 # Routes for Registration
 @app.route('/register', methods=["GET", "POST"])
@@ -96,7 +129,10 @@ def register():
             flash("Email already registered!", "danger")
             return redirect(url_for('register'))
 
-        users.append({"username": username, "email": email, "password": password})
+        # users.append({"username": username, "email": email, "password": password})
+        hashed_password = generate_password_hash(password)
+        users.append({"username": username, "email": email, "password": hashed_password})
+
         save_users(users)
         flash("Registration successful! Please log in.", "success")
         return redirect(url_for("login"))
@@ -112,10 +148,11 @@ def login():
         password = data.get("password")
 
         users = load_users()
-        user = next((user for user in users 
-                     if user["username"] == username and user["password"] == password), None)
+        # user = next((user for user in users 
+        #              if user["username"] == username and user["password"] == password), None)
 
-        if user:
+        user = next((user for user in users if user["username"] == username), None)
+        if user and check_password_hash(user["password"], password):
             session["username"] = user["username"]
             session["email"] = user["email"]
             flash("Login successful!", "success")
@@ -209,8 +246,9 @@ def upload_file():
             return redirect(url_for('dashboard'))
 
         flash("Invalid file type!", "danger")
+        return redirect(request.url)
 
-    return render_template('upload.html')
+    return redirect(url_for('dashboard'))
 
 def upload_to_drive(filepath, filename):
     file_metadata = {'name': filename, 'parents': ['154kFHYM0HwC2X_R7jV6DV74q_4dIVZzx']}
@@ -234,6 +272,12 @@ def upload_to_drive(filepath, filename):
 def list_files():
     metadata = load_metadata()
     return render_template("files.html", files=metadata)
+
+# File size handling "Error Print"
+@app.errorhandler(413)
+def file_too_large(e):
+    flash (f"Itni Badi! 20MB se chota la - File too large! Max allowed 30MB","danger")
+    return redirect(url_for('dashboard'))
 
 # Run App
 if __name__ == "__main__":
