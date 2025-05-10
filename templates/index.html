@@ -3,77 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
     <title>TechVeda</title>
+    
+    <!-- CSS Variables and Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
-    <p>Welcome to TechVeda</p>
+    <!-- Navbar -->
+    <nav class="navbar">
+  <div class="logo">TechVeda</div>
+  
+  <!-- Theme Toggle (centered absolutely with CSS) -->
+  <button class="theme-toggle" onclick="toggleTheme()">
+    <i class="fa-solid fa-moon"></i> Theme
+  </button>
 
-    <a href="/login">I already have an account</a> <br>
-    <a href="/register">Create an account</a>
-
-
-
-    <h1>📚 TechVeda: Uploaded Files</h1>
-
-
-    <form method="GET" action="{{ url_for('index') }}">
-        <input type="text" name="q" placeholder="Search by filename..." value="{{ request.args.get('q', '') }}">
-        
-        <select name="type">
-          <option value="">All Types</option>
-          <option value="pdf">PDF</option>
-          <option value="docx">DOCX</option>
-          <option value="pptx">PPTX</option>
-          <option value="txt">TXT</option>
-        </select>
-      
-        <select name="sort_by">
-          <option value="upload_time">Newest</option>
-          <option value="name">Name</option>
-          <option value="uploaded_by">Uploader</option>
-        </select>
-      
-        <button type="submit">Apply</button>
-      </form>
-      
-
-    {% if files %}
-    <ul>
-    {% for file in files %}
-        <li>
-            <strong>{{ file.filename }}</strong> |
-            Uploaded by: {{ file.uploaded_by }} |
-            Type: {{ file.file_type }} |
-            Subject: {{ file.subject }} |
-            Time: {{ file.upload_time }} |
-            <a href="https://drive.google.com/file/d/{{ file.drive_file_id }}/view" target="_blank">View</a> |
-            <a href="https://drive.google.com/uc?id={{ file.drive_file_id }}&export=download" target="_blank">Download</a>
-        </li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>No files found</p>
-{% endif %}
+  <div class="nav-links">
+    <a href="/login"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+    <a href="/register"><i class="fa-solid fa-user-plus"></i> Register</a>
+  </div>
+</nav>
 
 
 
+    <!-- Hero Section -->
+    <header class="hero">
+        <h1 class="typed-text" id="typed"></h1>
+        <p class="tagline">Empowering Students with Shared Knowledge</p>
+    </header>
 
-<!-- inside base.html or wherever -->
-{% with messages = get_flashed_messages() %}
-  {% if messages %}
-    <script>
-     var flashMessages = JSON.parse('{{ messages | tojson | safe }}');
+    <!-- Quote Carousel -->
+    <section class="carousel">
+        <div class="carousel-track">
+            <div class="quote-card">"Sleep is for the weak. Also for the programmers."</div>
+            <div class="quote-card">"99 little bugs in the code... take one down, patch it around..."</div>
+            <div class="quote-card">"Push to prod. Pray. Refresh."</div>
+            <div class="quote-card">"StackOverflow > Sleep."</div>
+        </div>
+    </section>
 
-    </script>
-  {% endif %}
-{% endwith %}
+    <!-- Search/Filter/Sort Toolbar -->
+    <section class="toolbar">
+        <form method="GET" action="{{ url_for('index') }}">
+            <input type="text" name="q" class="pill" placeholder="Search by filename..." value="{{ request.args.get('q', '') }}">
+
+            <select name="type" class="pill">
+                <option value="">All Types</option>
+                <option value="pdf">PDF</option>
+                <option value="docx">DOCX</option>
+                <option value="pptx">PPTX</option>
+                <option value="txt">TXT</option>
+            </select>
+
+            <select name="sort_by" class="pill">
+                <option value="upload_time">Newest</option>
+                <option value="name">Name</option>
+                <option value="uploaded_by">Uploader</option>
+            </select>
+
+            <button type="submit" class="pill">Apply</button>
+        </form>
+    </section>
+
+    <!-- File Grid Listing -->
+    <section class="file-grid">
+        {% if files %}
+            {% for file in files %}
+                <div class="file-card">
+                    <h3>{{ file.filename }}</h3>
+                    <p>📅 {{ file.upload_time }}</p>
+                    <p>👤 {{ file.uploaded_by }}</p>
+                    <div class="file-actions">
+                        <a href="https://drive.google.com/file/d/{{ file.drive_file_id }}/view" target="_blank"><i class="fa-solid fa-eye"></i></a>
+                        <a href="https://drive.google.com/uc?id={{ file.drive_file_id }}&export=download" target="_blank"><i class="fa-solid fa-download"></i></a>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="no-files">No files found.</p>
+        {% endif %}
+    </section>
+
+    <!-- Explorer -->
+    <section class="explorer">
+  <img src="{{ url_for('static', filename='images/kid-pc.png') }}" alt="Kid using PC">
+  <div class="signup-box">
+    <h3>Join TechVeda <strong>today</strong></h3>
+    <p>Sign up now and start learning and creating with TechVeda</p>
+    <input type="email" placeholder="📧 Email Address">
+    <button>Sign Up</button>
+  </div>
+</section>
+
+<footer>
+  <p>Made with ❤️ by Team TechVeda | <a href="#">Privacy</a> | <a href="#">Terms</a></p>
+</footer>
 
 
-    <a href="{{ url_for('dashboard') }}">⬅️ Back to Dashboard</a>
+    <!-- Flash Message Placeholder -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="flash-message" id="flash">
+                {{ messages[0] }}
+            </div>
+        {% endif %}
+    {% endwith %}
 
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        const typed = new Typed('#typed', {
+            strings: ['TechVeda', 'Learn. Share. Grow.', 'Tech for Students.'],
+            typeSpeed: 50,
+            backSpeed: 25,
+            loop: true
+        });
+
+        window.addEventListener('scroll', function () {
+            const nav = document.getElementById('navbar');
+            nav.classList.toggle('scrolled', window.scrollY > 0);
+        });
+    </script>
 </body>
 </html>
