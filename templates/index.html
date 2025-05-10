@@ -17,24 +17,28 @@
 
 
     <h1>📚 TechVeda: Uploaded Files</h1>
-<!-- 
-    {% if files %}
-        <ul>
-        {% for file in files %}
-            <li>
-                <strong>{{ file.filename }}</strong> |
-                Uploaded by: {{ file.uploaded_by }} |
-                Type: {{ file.file_type }} |
-                Time: {{ file.upload_time }} |
-                <a href="https://drive.google.com/uc?id={{ file.drive_file_id }}&export=download" target="_blank">Download</a>
-                |
-                <a href="https://drive.google.com/file/d/{{ file.drive_file_id }}/view" target="_blank">View</a>
-            </li>
-        {% endfor %}
-        </ul>
-    {% else %}
-        <p>No files uploaded yet.</p>
-    {% endif %} -->
+
+
+    <form method="GET" action="{{ url_for('index') }}">
+        <input type="text" name="q" placeholder="Search by filename..." value="{{ request.args.get('q', '') }}">
+        
+        <select name="type">
+          <option value="">All Types</option>
+          <option value="pdf">PDF</option>
+          <option value="docx">DOCX</option>
+          <option value="pptx">PPTX</option>
+          <option value="txt">TXT</option>
+        </select>
+      
+        <select name="sort_by">
+          <option value="upload_time">Newest</option>
+          <option value="name">Name</option>
+          <option value="uploaded_by">Uploader</option>
+        </select>
+      
+        <button type="submit">Apply</button>
+      </form>
+      
 
     {% if files %}
     <ul>
@@ -43,6 +47,7 @@
             <strong>{{ file.filename }}</strong> |
             Uploaded by: {{ file.uploaded_by }} |
             Type: {{ file.file_type }} |
+            Subject: {{ file.subject }} |
             Time: {{ file.upload_time }} |
             <a href="https://drive.google.com/file/d/{{ file.drive_file_id }}/view" target="_blank">View</a> |
             <a href="https://drive.google.com/uc?id={{ file.drive_file_id }}&export=download" target="_blank">Download</a>
@@ -52,6 +57,20 @@
 {% else %}
     <p>No files found</p>
 {% endif %}
+
+
+
+
+<!-- inside base.html or wherever -->
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <script>
+     var flashMessages = JSON.parse('{{ messages | tojson | safe }}');
+
+    </script>
+  {% endif %}
+{% endwith %}
+
 
     <a href="{{ url_for('dashboard') }}">⬅️ Back to Dashboard</a>
 

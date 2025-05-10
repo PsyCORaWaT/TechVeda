@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head><title>Edit Profile</title></head>
+<body>
+  <h1>Edit Your Profile</h1>
+
+  {% with msgs = get_flashed_messages(with_categories=true) %}
+    {% if msgs %}
+      <ul>
+      {% for cat, m in msgs %}
+        <li class="{{ cat }}">{{ m }}</li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+
+  <form action="{{ url_for('edit_profile') }}" method="post">
+    <label>Username:
+      <input type="text" name="username" value="{{ user.username }}" required>
+    </label><br>
+
+    <label>Email (read-only):
+      <input type="email" value="{{ session.email }}" disabled>
+    </label><br>
+
+    <label>Bio:
+      <textarea name="bio">{{ user.bio }}</textarea>
+    </label><br>
+
+    <label>Social Link:
+      <input type="url" name="social_link" value="{{ user.social_link }}">
+    </label><br>
+
+    <button type="submit">Save Changes</button>
+  </form>
+</body>
+</html>

@@ -1,12 +1,27 @@
-[
-    {
-        "username": "rawat04",
-        "email": "abhayrawata832@gmail.com",
-        "password": "1234"
+{
+  "emails": {
+    "abhayrawata832@gmail.com": {
+      "username": "rawat04",
+      "password": "scrypt:32768:8:1$Tab2QFXwIQvQYas8$99ea2ee5d54799141a5c046ee239bae548b6b8776f215fd0ea073dd2918d9287e3437e82a0431aad07f428ceaf4efc9ddd7468a9844feae550f692e3099dc3cf",
+      "bio": "qwq",
+      "social_link": "https://socialmedilink???.com"
     },
-    {
-        "username": "psycorawat04",
-        "email": "rawat.abhay.0401@gmail.com",
-        "password": "1111"
+    "dfh@yohoho.com": {
+      "username": "aapka",
+      "password": "scrypt:32768:8:1$0409Uq7ENU9aT3wF$02138658126c26b7c57bd3eefebb34daedeabd79c0ef539cc58f40f42261d1549e6eef0309874d44bfc988b610eb5a969eba44b024094e42356434f5487fe796",
+      "bio": "",
+      "social_link": ""
+    },
+    "dfh3@yohoho.com": {
+      "username": "qwerty",
+      "password": "scrypt:32768:8:1$26jxAzTiZpgTrAZQ$2b239dc5b0bb23f8b485abb3ab7d7cbb8d647443a7e79cac6b2b876f517abeb13f3c092649e0039d3d9b66793636293af683badfb90cdcc4520db131c6822931",
+      "bio": "",
+      "social_link": ""
     }
-]
+  },
+  "usernames": [
+    "rawat04",
+    "aapka",
+    "qwerty"
+  ]
+}
