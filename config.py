@@ -1,4 +1,3 @@
-#
 import os
 import json
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -115,11 +114,28 @@ def allowed_file(filename):
 # Defining Allowed subjects  for adding file
 # Allowed Subjects (ONLY these will be used to create folders)
 SUBJECTS = [
-    "Math",
+    "English",
     "History",
     "Hindi",
     "Physics",
     "Computer Science"
+    "Data structure",
+"System analysis and design",
+"Accounting",
+"Numerical method",
+"Computer Graphics",
+"Multimedia",
+"Software Engineering",
+"Visual Basic",
+"Geography",
+"Botany",
+"Sanskrit",
+"Chemistry",
+"Geology",
+"Physical Education",
+"Tourism",
+"Nutrition and Health Education",
+"Mathematics"
 ]
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 USER_FILES = os.path.join(BASE_DIR, "users.json")
