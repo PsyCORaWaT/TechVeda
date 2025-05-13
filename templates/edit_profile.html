@@ -1,37 +1,193 @@
 <!DOCTYPE html>
-<html>
-<head><title>Edit Profile</title></head>
+<html lang="en">
+<head>
+  <title>Edit Profile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Internal CSS to match project theme -->
+  <style>
+    :root {
+      --primary-color: #6A5ACD;
+      --accent-color: #FF69B4;
+      --bg-color: #F0F4FF;
+      --card-bg: #FFFFFF;
+      --text-light: #1F2937;
+      --text-muted: #5C5F66;
+      --glow-color: rgba(106, 90, 205, 0.2);
+      --pill-bg: #E3F2FD;
+      --font-family: 'Inter', 'Segoe UI', sans-serif;
+    }
+    body {
+      background: var(--bg-color);
+      color: var(--text-light);
+      font-family: var(--font-family);
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 420px;
+      margin: 2.5rem auto;
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 2px 16px var(--glow-color);
+      padding: 2rem 2rem 1.5rem 2rem;
+    }
+    h1 {
+      text-align: center;
+      color: var(--primary-color);
+      margin-bottom: 1.5rem;
+      font-size: 1.7rem;
+    }
+    form label {
+      display: block;
+      margin-bottom: 0.7rem;
+      color: var(--primary-color);
+      font-weight: 500;
+    }
+    form input[type="text"],
+    form input[type="email"],
+    form input[type="url"],
+    form textarea {
+      width: 100%;
+      padding: 0.6rem;
+      border: 1px solid var(--text-muted);
+      border-radius: 6px;
+      margin-bottom: 1.2rem;
+      background: var(--bg-color);
+      color: var(--text-light);
+      font-size: 1rem;
+      font-family: inherit;
+      transition: border 0.2s;
+    }
+    form input[type="email"]:disabled {
+      background: #f5f5f5;
+      color: var(--text-muted);
+    }
+    form textarea {
+      min-height: 60px;
+      resize: vertical;
+    }
+    button[type="submit"] {
+      background: var(--primary-color);
+      color: #fff;
+      border: none;
+      border-radius: 30px;
+      padding: 0.7rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 8px var(--glow-color);
+      display: block;
+      margin: 0 auto;
+    }
+    button[type="submit"]:hover {
+      background: var(--accent-color);
+      color: #fff;
+    }
+    .flash-message {
+      margin-bottom: 1.2rem;
+      padding: 0.9rem 1.2rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      background: #e6f7ff;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      animation: fadeInDown 0.5s;
+    }
+    .flash-message.success {
+      background: #e6ffed;
+      color: #155724;
+      border-color: #b7f7cc;
+    }
+    .flash-message.danger {
+      background: #ffe6e6;
+      color: #721c24;
+      border-color: #f5c6cb;
+    }
+    .flash-message.warning {
+      background: #fffbe6;
+      color: #856404;
+      border-color: #ffeeba;
+    }
+    .flash-message.info {
+      background: #e6f7ff;
+      color: #0c5460;
+      border-color: #bee5eb;
+    }
+    .close-btn {
+      background: none;
+      border: none;
+      color: inherit;
+      font-size: 1.2rem;
+      cursor: pointer;
+      margin-left: 1rem;
+    }
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-30px);}
+      to   { opacity: 1; transform: translateY(0);}
+    }
+    @media (max-width: 600px) {
+      .container {
+        padding: 1rem 0.5rem;
+        margin: 1rem 0.2rem;
+      }
+      h1 {
+        font-size: 1.2rem;
+      }
+      button[type="submit"] {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
 <body>
-  <h1>Edit Your Profile</h1>
+  <div class="container">
+    <h1>Edit Your Profile</h1>
 
-  {% with msgs = get_flashed_messages(with_categories=true) %}
-    {% if msgs %}
-      <ul>
-      {% for cat, m in msgs %}
-        <li class="{{ cat }}">{{ m }}</li>
-      {% endfor %}
-      </ul>
-    {% endif %}
-  {% endwith %}
+    {% with msgs = get_flashed_messages(with_categories=true) %}
+      {% if msgs %}
+        {% for cat, m in msgs %}
+          <div class="flash-message {{ cat }}">
+            {{ m }}
+            <button type="button" class="close-btn" onclick="this.parentElement.style.display='none';">&times;</button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
 
-  <form action="{{ url_for('edit_profile') }}" method="post">
-    <label>Username:
-      <input type="text" name="username" value="{{ user.username }}" required>
-    </label><br>
+    <form action="{{ url_for('edit_profile') }}" method="post">
+      <label>Username:
+        <input type="text" name="username" value="{{ user.username }}" required>
+      </label>
 
-    <label>Email (read-only):
-      <input type="email" value="{{ session.email }}" disabled>
-    </label><br>
+      <label>Email (इसे तो कोई बदल नहीं सकता):
+        <input type="email" value="{{ session.email }}" disabled>
+      </label>
 
-    <label>Bio:
-      <textarea name="bio">{{ user.bio }}</textarea>
-    </label><br>
+      <label>Bio:
+        <textarea name="bio">{{ user.bio }}</textarea>
+      </label>
 
-    <label>Social Link:
-      <input type="url" name="social_link" value="{{ user.social_link }}">
-    </label><br>
+      <label>Social Link:
+        <input type="url" name="social_link" value="{{ user.social_link }}">
+      </label>
 
-    <button type="submit">Save Changes</button>
-  </form>
+      <button type="submit">Save Changes</button>
+    </form>
+  </div>
+  <script>
+    // Auto-hide flash messages after 4 seconds
+    window.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll('.flash-message').forEach(function(flash) {
+        setTimeout(() => {
+          flash.style.display = "none";
+        }, 4000);
+      });
+    });
+  </script>
 </body>
 </html>

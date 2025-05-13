@@ -8,114 +8,243 @@
     <!-- CSS Variables and Styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
 </head>
 <body>
     <!-- Navbar -->
     <nav class="navbar">
-  <div class="logo">TechVeda</div>
-  
-  <!-- Theme Toggle (centered absolutely with CSS) -->
+        <div class="logo" style="
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            font-weight: bold;
+            font-size: 2rem;
+            letter-spacing: 2px;
+            color: #6A5ACD;
+            background: linear-gradient(90deg, #6A5ACD 60%, #FF69B4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-shadow: 0 2px 12px rgba(106,90,205,0.10);
+            transition: transform 0.2s;
+            cursor: pointer;
+        "
+        onmouseover="this.style.transform='scale(1.07) rotate(-2deg)'"
+        onmouseout="this.style.transform='scale(1) rotate(0deg)'"
+        >
+            <i class="fa-solid fa-graduation-cap" style="color:#FF69B4;"></i>
+            TechVeda
+        </div>
+  <!-- Theme Toggle -->
   <button class="theme-toggle" onclick="toggleTheme()">
     <i class="fa-solid fa-moon"></i> Theme
   </button>
 
   <div class="nav-links">
-    <a href="/login"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
-    <a href="/register"><i class="fa-solid fa-user-plus"></i> Register</a>
+    {% if session.get('username') %}
+      <!-- Show user icon and name when logged in -->
+      <a href="{{ url_for('dashboard') }}">
+        <i class="fa-solid fa-user"></i> {{ session['username'] }}
+      </a>
+    {% else %}
+      <!-- Show login/register buttons when not logged in -->
+      <a href="/login"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+      <a href="/register"><i class="fa-solid fa-user-plus"></i> Register</a>
+    {% endif %}
   </div>
 </nav>
 
 
 
     <!-- Hero Section -->
-    <header class="hero">
-        <h1 class="typed-text" id="typed"></h1>
-        <p class="tagline">Empowering Students with Shared Knowledge</p>
-    </header>
+<header class="hero" data-aos="fade-up" data-aos-duration="1000">
+    <h1 class="typed-text" id="typed"></h1>
+    <p class="tagline" data-aos="fade-in" data-aos-delay="500">Empowering Students with Shared Knowledge</p>
+</header>
 
-    <!-- Quote Carousel -->
-    <section class="carousel">
-        <div class="carousel-track">
-            <div class="quote-card">"Sleep is for the weak. Also for the programmers."</div>
-            <div class="quote-card">"99 little bugs in the code... take one down, patch it around..."</div>
-            <div class="quote-card">"Push to prod. Pray. Refresh."</div>
-            <div class="quote-card">"StackOverflow > Sleep."</div>
-        </div>
-    </section>
-
-    <!-- Search/Filter/Sort Toolbar -->
-    <section class="toolbar">
-        <form method="GET" action="{{ url_for('index') }}">
-            <input type="text" name="q" class="pill" placeholder="Search by filename..." value="{{ request.args.get('q', '') }}">
-
-            <select name="type" class="pill">
-                <option value="">All Types</option>
-                <option value="pdf">PDF</option>
-                <option value="docx">DOCX</option>
-                <option value="pptx">PPTX</option>
-                <option value="txt">TXT</option>
-            </select>
-
-            <select name="sort_by" class="pill">
-                <option value="upload_time">Newest</option>
-                <option value="name">Name</option>
-                <option value="uploaded_by">Uploader</option>
-            </select>
-
-            <button type="submit" class="pill">Apply</button>
-        </form>
-    </section>
-
-    <!-- File Grid Listing -->
-    <section class="file-grid">
-        {% if files %}
-            {% for file in files %}
-                <div class="file-card">
-                    <h3>{{ file.filename }}</h3>
-                    <p>📅 {{ file.upload_time }}</p>
-                    <p>👤 {{ file.uploaded_by }}</p>
-                    <div class="file-actions">
-                        <a href="https://drive.google.com/file/d/{{ file.drive_file_id }}/view" target="_blank"><i class="fa-solid fa-eye"></i></a>
-                        <a href="https://drive.google.com/uc?id={{ file.drive_file_id }}&export=download" target="_blank"><i class="fa-solid fa-download"></i></a>
-                    </div>
-                </div>
-            {% endfor %}
-        {% else %}
-            <p class="no-files">No files found.</p>
-        {% endif %}
-    </section>
-
-    <!-- Explorer -->
-    <section class="explorer">
-  <img src="{{ url_for('static', filename='images/kid-pc.png') }}" alt="Kid using PC">
-  <div class="signup-box">
-    <h3>Join TechVeda <strong>today</strong></h3>
-    <p>Sign up now and start learning and creating with TechVeda</p>
-    <input type="email" placeholder="📧 Email Address">
-    <button>Sign Up</button>
+    <!-- Updated Quote Carousel -->
+<section class="carousel">
+  <div class="swiper">
+    <div class="swiper-wrapper">
+      <div class="swiper-slide quote-card">"Sleep is for the weak. Also for the programmers."</div>
+      <div class="swiper-slide quote-card">"99 little bugs in the code... take one down, patch it around..."</div>
+      <div class="swiper-slide quote-card">"Push to prod. Pray. Refresh."</div>
+      <div class="swiper-slide quote-card">"StackOverflow > Sleep."</div>
+      <div class="swiper-slide quote-card">"Sleep is optional, deadlines are not."</div>
+      <div class="swiper-slide quote-card">"College: Where coffee and stress are your best friends."</div>
+      <div class="swiper-slide quote-card">"Grades don’t define you, but they sure do ruin your day."</div>
+      <div class="swiper-slide quote-card">"Procrastination: The fine art of planning to fail."</div>
+      <div class="swiper-slide quote-card">"C’s get degrees, but A’s get anxiety."</div>
+      <div class="swiper-slide quote-card">"The Wi-Fi signal is stronger than my will to study."</div>
+      <div class="swiper-slide quote-card">"One more episode won’t hurt... said no GPA ever."</div>
+      <div class="swiper-slide quote-card">"Group projects: Where one works, and the rest take credit."</div>
+      <div class="swiper-slide quote-card">"College is 10% learning and 90% figuring out what’s due tomorrow."</div>
+      <div class="swiper-slide quote-card">"Motivation is like Wi-Fi, it disappears when you need it most."</div>
+      <div class="swiper-slide quote-card">"Study like there’s no tomorrow because, for this exam, there isn’t."</div>
+      <div class="swiper-slide quote-card">"Success is 1% inspiration and 99% last-minute panic."</div>
+      <div class="swiper-slide quote-card">"College: The only place where you pay to be stressed."</div>
+      <div class="swiper-slide quote-card">"If you’re not crying, are you even trying?"</div>
+      <div class="swiper-slide quote-card">"Dream big, but don’t forget to submit your assignments."</div>
+      <div class="swiper-slide quote-card">"The library is my second home, and coffee is my lifeline."</div>
+    </div>
+    <!-- Add navigation buttons -->
+    <div class="swiper-button-next"></div>
+    <div class="swiper-button-prev"></div>
+    <!-- Add pagination -->
+    <div class="swiper-pagination"></div>
   </div>
 </section>
 
+    <!-- Search/Filter/Sort Toolbar -->
+<section class="toolbar">
+  <form method="GET" action="{{ url_for('index') }}">
+    <input type="text" name="q" class="pill" placeholder="Search by filename..." value="{{ request.args.get('q', '') }}">
+
+    <select name="type" class="pill">
+      <option value="">All Types</option>
+      <option value="pdf">PDF</option>
+      <option value="docx">DOCX</option>
+      <option value="pptx">PPTX</option>
+      <option value="txt">TXT</option>
+    </select>
+<select name="subject" id="subject" class="pill">
+  <option value="">Select Subject</option>
+  {% for subject in subjects %}
+    <option value="{{ subject }}" {% if subject == request.args.get('subject') %}selected{% endif %}>
+      {{ subject }}
+    </option>
+  {% endfor %}
+</select>
+
+    <select name="sort_by" class="pill">
+      <option value="upload_time">Newest</option>
+      <option value="name">Name</option>
+      <option value="uploaded_by">Uploader</option>
+    </select>
+
+    <button type="submit" class="pill">Apply</button>
+  </form>
+</section>
+
+
+
+    <!-- File Listing section-->
+<section class="file-grid">
+  {% if files %}
+    <div class="file-grid-container">
+      {% for file in files %}
+        <div class="file-card">
+          <h3>{{ file.filename }}</h3>
+          <p>📅 {{ file.upload_time }}</p>
+          <p>👤 {{ file.uploaded_by }}</p>
+          <p>📚 Subject: {{ file.subject }}</p>
+          <div class="file-actions">
+            <a href="https://drive.google.com/file/d/{{ file.drive_file_id }}/view" target="_blank">
+              <i class="fa-solid fa-eye"></i>
+            </a>
+            <a href="https://drive.google.com/uc?id={{ file.drive_file_id }}&export=download" target="_blank">
+              <i class="fa-solid fa-download"></i>
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="no-files">No files found.</p>
+  {% endif %}
+</section>
+
+    <!-- Explorer -->
+    <section class="explorer">
+  <!-- <img src="{{ url_for('static', filename='images/kid-pc.png') }}" alt="Kid using PC"> -->
+  <div class="signup-box" style="
+    background: var(--card-bg);
+    border-radius: 14px;
+    box-shadow: 0 4px 24px var(--glow-color, rgba(106,90,205,0.12));
+    padding: 1.3rem 1rem 1rem 1rem;
+    max-width: 280px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.7rem;
+">
+    <h3 style="color: var(--primary-color); margin-bottom: 0.3rem; font-size: 1.1rem;">
+        <i class="fa-solid fa-users signup-animate-icon" style="color: #FF69B4; font-size: 1.4rem; vertical-align: middle;"></i>
+        Join <strong>TechVeda</strong> today
+    </h3>
+    <p style="color: var(--text-muted); text-align: center; font-size: 0.97rem;">
+        Become part of our learning community.<br>
+        Connect, share, and grow with us!
+    </p>
+    <div style="display: flex; gap: 0.8rem; margin: 0.3rem 0;">
+        <a href="https://discord.gg/68p6sb9T" target="_blank" title="Join us on Discord"
+           style="font-size: 1.5rem; color: #5865F2; display: flex; align-items: center;">
+            <i class="fa-brands fa-discord signup-animate-icon"></i>
+        </a>
+        <a href="https://github.com/PsyCORaWaT/TechVeda" target="_blank" title="Visit our GitHub"
+           style="font-size: 1.5rem; color: #333; display: flex; align-items: center;">
+            <i class="fa-brands fa-github signup-animate-icon"></i>
+        </a>
+      </div>
+</div>
+
+</div>
+</section>
+
 <footer>
-  <p>Made with ❤️ by Team TechVeda | <a href="#">Privacy</a> | <a href="#">Terms</a></p>
+  <div class="footer-container">
+    <div class="footer-logo">
+      <h2>TechVeda</h2>
+      <p>Empowering students with shared knowledge.</p>
+    </div>
+    <div class="footer-links">
+      <h3>Quick Links</h3>
+      <ul style="list-style-type: none;">
+        <li><a href="#">About Us</a></li>
+        <li><a href="#">Contact</a></li>
+        <li><a href="#">Privacy Policy</a></li>
+        <li><a href="#">Terms of Service</a></li>
+      </ul>
+    </div>
+    <div class="footer-social">
+      <h3>Follow Us</h3>
+      <a href="https://facebook.com" target="_blank"><i class="fa-brands fa-facebook"></i></a>
+      <a href="https://twitter.com" target="_blank"><i class="fa-brands fa-twitter"></i></a>
+      <a href="https://instagram.com" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+      <a href="https://linkedin.com" target="_blank"><i class="fa-brands fa-linkedin"></i></a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; 2025 TechVeda. All rights reserved.</p>
+  </div>
 </footer>
 
-
     <!-- Flash Message Placeholder -->
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <div class="flash-message" id="flash">
-                {{ messages[0] }}
-            </div>
-        {% endif %}
-    {% endwith %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="flash-message alert-{{ category }}" id="flash">
+        <i class="fa-solid fa-circle-info"></i> {{ message }}
+        <button type="button" class="close-btn" onclick="this.parentElement.style.display='none';">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
     <script>
         const typed = new Typed('#typed', {
-            strings: ['TechVeda', 'Learn. Share. Grow.', 'Tech for Students.'],
+            strings: ['TechVeda', 'Learn. Share. Grow.', 'Tech for Students.', 'Empowering Knowledge.'],
             typeSpeed: 50,
             backSpeed: 25,
             loop: true
@@ -125,6 +254,40 @@
             const nav = document.getElementById('navbar');
             nav.classList.toggle('scrolled', window.scrollY > 0);
         });
+
+        const swiper = new Swiper('.swiper', {
+            slidesPerView: 1, // Number of slides visible at a time
+            spaceBetween: 20, // Space between slides
+            loop: true, // Infinite loop
+            autoplay: {
+                delay: 3000, // Auto-scroll every 3 seconds
+                disableOnInteraction: false, // Continue autoplay after user interaction
+            },
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+            },
+            breakpoints: {
+                640: {
+                    slidesPerView: 2,
+                },
+                1024: {
+                    slidesPerView: 3,
+                },
+            },
+        });
+
+        AOS.init({
+            once: true, // Animation happens only once
+            offset: 120, // Offset from the top of the viewport
+            duration: 1000, // Animation duration in milliseconds
+        });
     </script>
+
+
 </body>
 </html>

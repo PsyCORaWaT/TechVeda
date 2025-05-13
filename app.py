@@ -51,7 +51,7 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if "username" not in session:
-            flash("You need to log in first!", "warning")
+            flash(f"Pehle Logoin to karle - You need to log in first!", "warning")
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
@@ -63,8 +63,13 @@ def index():
 
     query = request.args.get('q','').lower()
     file_type = request.args.get('type','')
+    subject_filter = request.args.get('subject', '').lower()
     sort_by = request.args.get('sort_by','upload_time') #Default Sorting (Sort By Time)
 
+
+
+    # ✅ Extract all available subjects BEFORE filtering
+    subjects = sorted({f.get("subject", "") for f in metadata if f.get("subject")})
     #applying Filter Functionality
 
     # Filter by search
@@ -75,6 +80,11 @@ def index():
     # Filter by file type
     if file_type:
         metadata = [file for file in metadata if file["file_type"].lower() == file_type.lower()]
+
+     # ✅ Filter by subject
+    if subject_filter:
+        metadata = [file for file in metadata
+                    if file.get("subject", "").lower() == subject_filter]
 
     # sorting
     if sort_by == 'name':
@@ -87,7 +97,7 @@ def index():
         reverse=True
     )
     
-    return render_template('index.html', files = metadata)
+    return render_template('index.html', files = metadata, subjects=subjects)
 
 
     # metadata.sort(key=lambda x: x.get('upload_time', ''), reverse=True)
@@ -103,15 +113,16 @@ def register():
 
             #vALIDATION cHECK ethi krni
         if not username or not email or not password:
-            flash(f"Sara bhar - All fields are required!", "danger")
+            flash(f"सारा भर - All fields are required!", "danger")
+            
             return redirect(url_for('register'))
         # Duplicate iss Check krne
         data = load_users()
         if email_exists(email):
-            flash(f"Baar Baar?? - Email already registered!", "danger")
+            flash(f"तुम हो यहां पे पहले से - Email already registered!", "danger")
             return redirect(url_for('register'))
         if username_exists(username):
-            flash(f"Kuch to Naya Soch - Username already taken!", "danger")
+            flash(f"कोई नया नाम सोच ले - Username already taken!", "danger")
             return redirect(url_for('register'))
 
         # Pasword Hashing for extraaaaaa protection
@@ -125,7 +136,8 @@ def register():
         data["usernames"].append(username)
         save_users(data)
 
-        flash(f"Registration successful! Please log in.", "success")
+        flash(f"आइये! -Registration successful! Please log in.", "success")
+        print(f"User {username} registered successfully.")
         return redirect(url_for("login"))
     
     return render_template('register.html')
@@ -145,18 +157,19 @@ def login():
             if check_password_hash(user["password"], password):
                 session["email"]    = email
                 session["username"] = user["username"]
-                flash(f"Malik Aap Aagye - Login successful!", "success")
+                flash(f"मलिक आप आ गए - Login successful!", "success")
                 return redirect(url_for('dashboard'))
         
-        flash(f"Kuch To Gadbadh hai! - Invalid username or password!", "danger")
+        flash(f"कुछ तो गड़बड़ है! - Invalid username or password!", "danger")
         return redirect(url_for("login"))
-
+    
+    print("Login page accessed")
     return render_template('login.html')
 
 @app.route("/logout")
 def logout():
     session.clear()
-    flash("Logged out successfully!", "info")
+    flash(f"Bye - Logged out successfully!", "info")
     return redirect(url_for("login"))
 
 
@@ -174,7 +187,7 @@ def profile():
 
 # Route for Dashboard
 @app.route('/dashboard', methods=["POST", "GET"])
-@login_required  # Ensure user is logged-in
+@login_required
 def dashboard():
     if "username" in session:
         name = session["username"]
@@ -182,23 +195,39 @@ def dashboard():
 
         metadata = load_metadata()
 
+        # Get filter parameters
+        query = request.args.get("q", "").lower()
+        file_type = request.args.get("type", "")
+        subject = request.args.get("subject", "")
+        sort_by = request.args.get("sort_by", "upload_time")
+
         # Filter files uploaded by the logged-in user
-        user_files = [file for file in metadata if file.get("uploaded_by") == name]
+        user_files = [
+            file for file in metadata
+            if file.get("uploaded_by") == name and
+               (not query or query in file.get("filename", "").lower()) and
+               (not file_type or file.get("type") == file_type) and
+               (not subject or file.get("subject") == subject)
+        ]
+
+        # Sort files
+        if sort_by == "name":
+            user_files.sort(key=lambda x: x.get("filename", "").lower())
+        elif sort_by == "uploaded_by":
+            user_files.sort(key=lambda x: x.get("uploaded_by", "").lower())
+        else:  # Default to upload_time
+            user_files.sort(key=lambda x: x.get("upload_time", ""), reverse=True)
 
         # Load user profile info
         user = get_user(email) or {}
-
-        
-
-        #   # full user profile
 
         return render_template(
             "dashboard.html",
             name=name,
             email=email,
             files=user_files,
-            user=user,  # ← SEND this to HTML
-            subjects = SUBJECTS
+            user=user,
+            subjects=SUBJECTS  # Pass subjects to the template
         )
 
 
@@ -221,7 +250,7 @@ def edit_profile():
 
          # 1) Username uniqueness check
         if new_username != user["username"] and username_exists(new_username):
-            flash("Username already taken!", "danger")
+            flash(f"कुछ या सोच ले!! - Username already taken!", "danger")
             return redirect(url_for("edit_profile"))
 
         # 2) Update JSON store & get back updated user dict
@@ -268,21 +297,19 @@ def delete_files(file_id):
         
         save_metadata(metadata)
 
-        flash("Le bhai kr diya Delete", "Success")
+        flash("ले भाई कर दिया Delete", "Success")
         return redirect(url_for("dashboard"))
     else:
-        flash("Bhai jo hai hi nhi usko kahan se Delete Karun????", "File Not Found")
+        flash("File Not here", "File Not Found")
         return redirect(url_for("dashboard"))
 
 # Route for file upload
-@app.route('/upload', methods=["POST","GET"])
+@app.route('/upload', methods=["POST", "GET"])
 @login_required
 def upload():
     uploaded_file = request.files.get('file')
-    subject       = request.form.get('subject', '').strip()
-    uploader      = session['username']
-    print("Subject:", subject)
-    print("Uploaded File:", uploaded_file.filename if uploaded_file else "No file")
+    subject = request.form.get('subject', '').strip()  # Get the subject from the form
+    uploader = session['username']
 
     if not uploaded_file or uploaded_file.filename == '':
         flash('No file selected!', 'warning')
@@ -291,15 +318,16 @@ def upload():
     if not allowed_file(uploaded_file.filename):
         flash('File type not allowed!', 'danger')
         return redirect(url_for('dashboard'))
-    try:
-        from config import get_or_create_folder
 
-        # STEP: Get Folder ID or Create Folder
+    if not subject:
+        flash('Subject is required!', 'warning')
+        return redirect(url_for('dashboard'))
+
+    try:
+        # Get Folder ID or Create Folder
         folder_id = get_or_create_folder(subject, parent_id=TECHVEDA_PARENT_FOLDER)
 
-        print("Folder ID:", folder_id)
-
-        # STEP: Upload File to Drive
+        # Upload File to Google Drive
         media = MediaIoBaseUpload(uploaded_file.stream, mimetype=uploaded_file.mimetype)
         file_metadata = {
             'name': uploaded_file.filename,
@@ -312,32 +340,32 @@ def upload():
             fields='id, webViewLink'
         ).execute()
 
-        # 🔓 Grant “anyone with link” read permission:
+        # Grant “anyone with link” read permission
         drive_service.permissions().create(
-        fileId=drive_file["id"],
-        body={"type": "anyone", "role": "reader"},fields="id").execute()
+            fileId=drive_file["id"],
+            body={"type": "anyone", "role": "reader"},
+            fields="id"
+        ).execute()
 
-        print("Drive File Created:", drive_file)
-
-        # STEP: Save Metadata
+        # Save Metadata
         metadata = load_metadata()
         metadata.append({
-            "filename": uploaded_file.filename,      # unified key
+            "filename": uploaded_file.filename,
             "uploaded_by": uploader,
             "email": session["email"],
-            "file_type": uploaded_file.filename.rsplit('.',1)[1].lower(),
-            "subject": subject,
+            "file_type": uploaded_file.filename.rsplit('.', 1)[1].lower(),
+            "subject": subject,  # Save the subject
             "upload_time": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
-            "drive_file_id": drive_file["id"],       # unified key
+            "drive_file_id": drive_file["id"],
             "web_link": drive_file["webViewLink"]
         })
         save_metadata(metadata)
 
-        print("✅ Metadata written successfully")
-        flash("Upload successful!", "success")
+        flash(f"चढ़ गई File - Upload successful!", "success")
+        print(f"File {uploaded_file.filename} uploaded successfully to Google Drive.")
     except Exception as e:
-        print("🔥 ERROR during upload:", e)
-        flash("Something went wrong during upload.", "danger")
+        print("Error during upload:", e)
+        flash(f"नहीं चढ़ी फ़ाइल - Something went wrong during upload.", "danger")
 
     return redirect(url_for("dashboard"))
 
@@ -368,7 +396,7 @@ def list_files():
 # File size handling "Error Print"
 @app.errorhandler(413)
 def file_too_large(e):
-    flash (f"Itni Badi! 20MB se chota la - File too large! Max allowed 20MB","danger")
+    flash (f"इतनी बड़ी! 20MB से छोटी File ला- File too large! Max allowed 20MB","danger")
     return redirect(url_for('dashboard'))
 
 # Run App

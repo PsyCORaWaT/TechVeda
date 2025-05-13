@@ -31,7 +31,13 @@ def username_exists(username):
     return username in load_users()["usernames"]
 
 def get_user(email):
-    return load_users()["emails"].get(email)
+    data = load_users()
+    user = data["emails"].get(email)
+    if user:
+        user = user.copy()  # Avoid mutating the original
+        user["email"] = email
+    print(user)
+    return user
 
 def update_user_profile(email, *,
                         username=None,

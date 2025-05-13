@@ -47,40 +47,39 @@ if (carousel) {
   });
 }
 
-
-function toggleTheme() {
-  const currentTheme = document.documentElement.getAttribute("data-theme");
-  if (currentTheme === "light") {
-    document.documentElement.removeAttribute("data-theme");
-    console.log("Switched to dark theme");
-  } else {
-    document.documentElement.setAttribute("data-theme", "light");
-    console.log("Switched to light theme");
-  }
-}
-
-
-function toggleTheme() {
-  const root = document.documentElement;
-  const icon = document.getElementById("theme-icon");
-  const isLight = root.getAttribute("data-theme") === "light";
-
-  if (isLight) {
-    root.removeAttribute("data-theme");
-    icon.classList.replace("fa-sun", "fa-moon");
-    console.log("Switched to dark theme");
-  } else {
-    root.setAttribute("data-theme", "light");
-    icon.classList.replace("fa-moon", "fa-sun");
-    console.log("Switched to light theme");
-  }
-}
-
-
+// Theme Toggle
 function toggleTheme() {
   const html = document.documentElement;
   const icon = document.querySelector(".theme-toggle i");
   const isLight = html.getAttribute("data-theme") === "light";
   html.setAttribute("data-theme", isLight ? "dark" : "light");
   icon.className = isLight ? "fa-solid fa-moon" : "fa-solid fa-sun";
+
+  // Save theme preference in localStorage
+  localStorage.setItem("theme", isLight ? "dark" : "light");
 }
+
+// Apply saved theme on page load
+window.addEventListener("DOMContentLoaded", () => {
+  const savedTheme = localStorage.getItem("theme") || "light";
+  document.documentElement.setAttribute("data-theme", savedTheme);
+  const icon = document.querySelector(".theme-toggle i");
+  icon.className = savedTheme === "light" ? "fa-solid fa-moon" : "fa-solid fa-sun";
+});
+
+
+  // Animate icons with a bounce effect
+  document.querySelectorAll('.signup-animate-icon').forEach(function(icon, i) {
+    icon.animate([
+      { transform: 'scale(1) rotate(0deg)' },
+      { transform: 'scale(1.18) rotate(-8deg)' },
+      { transform: 'scale(1) rotate(0deg)' }
+    ], {
+      duration: 1200 + i * 200,
+      iterations: Infinity,
+      direction: 'alternate',
+      easing: 'ease-in-out',
+      delay: i * 200
+    });
+  });
+
